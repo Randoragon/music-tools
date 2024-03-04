@@ -278,6 +278,9 @@ impl Cli {
                     delimiter = Some(args[i + 1].clone());
                     i += 1;
                 },
+                str if str.starts_with("-d") => {
+                    delimiter = Some(((args[i])[2..]).to_string());
+                },
                 "-0" | "--null-delimited" => { null_delimited = true; },
                 "--" => break,
 
