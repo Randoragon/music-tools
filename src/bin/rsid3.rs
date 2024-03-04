@@ -4,7 +4,7 @@ use std::process::ExitCode;
 use anyhow::{anyhow, Result};
 
 /// Prints how to use the program.
-fn usage() {
+fn print_usage() {
     eprintln!("Usage:  rsid3 [OPTION] FILE...");
     eprintln!("");
     eprintln!("Reads or writes ID3v2 tags in mp3 files.");
@@ -22,6 +22,115 @@ fn usage() {
     eprintln!("  --FRAME= DESC LANG TEXT  Set the value of FRAME (COMM, USLT).");
     eprintln!("");
     eprintln!("If no get or set options are supplied, all frames are printed.");
+}
+
+/// Prints the available frames.
+fn print_frames() {
+    println!("AENC	Audio encryption");
+    println!("APIC	Attached (or linked) picture");
+    println!("ASPI	Audio seek point index");
+    println!("CHAP	Chapter");
+    println!("COMM	User comment (DESC, LANG, TEXT)");
+    println!("COMR	Commercial frame");
+    println!("CTOC	Table of contents");
+    println!("ENCR	Encryption method registration");
+    println!("EQU2	Equalization 2");
+    println!("ETCO	Event timing codes");
+    println!("GEOB	General encapsulated object");
+    println!("GRID	Group identification registration");
+    println!("GRP1	iTunes grouping");
+    println!("IPLS	Involved people list");
+    println!("LINK	Linked information");
+    println!("MCDI	Binary dump of CD's TOC");
+    println!("MLLT	MPEG location lookup table");
+    println!("MVIN	iTunes movement number/count");
+    println!("MVNM	iTunes movement name");
+    println!("OWNE	Ownership frame");
+    println!("PCNT	Play counter");
+    println!("PCST	iTunes podcast flag");
+    println!("POPM	Popularimeter");
+    println!("POSS	Position synchronisation frame");
+    println!("PRIV	Private frame");
+    println!("RBUF	Recommended buffer size");
+    println!("RVA2	Relative volume adjustment 2");
+    println!("RVAD	Relative volume adjustment");
+    println!("RVRB	Reverb");
+    println!("SEEK	Seek frame");
+    println!("SIGN	Signature frame");
+    println!("SYLT	Synchronised lyrics/text");
+    println!("SYTC	Synchronised tempo codes");
+    println!("TALB	Album");
+    println!("TBPM	Beats per minute");
+    println!("TCAT	iTunes podcast category");
+    println!("TCMP	iTunes compilation flag");
+    println!("TCOM	Composer");
+    println!("TCON	Content type (genre)");
+    println!("TCOP	Copyright");
+    println!("TDAT	Date of recording (DDMM)");
+    println!("TDEN	Encoding time");
+    println!("TDES	iTunes podcast description");
+    println!("TDLY	Audio delay (ms)");
+    println!("TDOR	Original release time");
+    println!("TDRC	Recording time");
+    println!("TDRL	Release time");
+    println!("TDTG	Tagging time");
+    println!("TENC	Encoder");
+    println!("TEXT	Lyricist");
+    println!("TFLT	File type");
+    println!("TGID	iTunes podcast identifier");
+    println!("TIME	Time of recording (HHMM)");
+    println!("TIPL	Involved people list");
+    println!("TIT1	Content group description");
+    println!("TIT2	Title");
+    println!("TIT3	Subtitle/description refinement");
+    println!("TKEY	Starting key");
+    println!("TKWD	iTunes podcast keywords");
+    println!("TLAN	Audio languages");
+    println!("TLEN	Audio length (ms)");
+    println!("TMCL	Musicians credits list");
+    println!("TMED	Source media type");
+    println!("TMOO	Mood");
+    println!("TOAL	Original album");
+    println!("TOFN	Original filename");
+    println!("TOLY	Original lyricist");
+    println!("TOPE	Original artist/performer");
+    println!("TORY	Original release year");
+    println!("TOWN	Owner/Licensee");
+    println!("TPE1	Lead artist/performer/soloist/group");
+    println!("TPE2	Band/Orchestra/Accompaniment");
+    println!("TPE3	Conductor");
+    println!("TPE4	Interpreter/Remixer/Modifier");
+    println!("TPOS	Part of set");
+    println!("TPRO	Produced");
+    println!("TPUB	Publisher");
+    println!("TRCK	Track number");
+    println!("TRDA	Recording dates");
+    println!("TRSN	Internet radio station name");
+    println!("TRSO	Internet radio station owner");
+    println!("TSIZ	Size of audio data (bytes)");
+    println!("TSO2	iTunes album artist sort");
+    println!("TSOA	Album sort order key");
+    println!("TSOC	iTunes composer sort");
+    println!("TSOP	Performer sort order key");
+    println!("TSOT	Title sort order key");
+    println!("TSRC	International Standard Recording Code (ISRC)");
+    println!("TSSE	Encoder settings");
+    println!("TSST	Set subtitle");
+    println!("TXXX	User-defined text data (DESC, TEXT)");
+    println!("TYER	Year of recording");
+    println!("UFID	Unique file identifier");
+    println!("USER	Terms of use");
+    println!("USLT	Unsynchronised lyrics/text transcription (DESC, LANG, TEXT)");
+    println!("WCOM	Commercial information");
+    println!("WCOP	Copyright information");
+    println!("WFED	iTunes podcast feed");
+    println!("WOAF	Official file information");
+    println!("WOAR	Official artist/performer information");
+    println!("WOAS	Official source information");
+    println!("WORS	Official internet radio information");
+    println!("WPAY	Payment information");
+    println!("WPUB	Official publisher information");
+    println!("WXXX	User-defined URL data (DESC, URL)");
 }
 
 /// Represents all options passed to the program on the command line.
@@ -1083,6 +1192,16 @@ fn main() -> ExitCode {
             return ExitCode::FAILURE;
         }
     };
+
+    if cli.help {
+        print_usage();
+        return ExitCode::SUCCESS;
+    }
+
+    if cli.list_frames {
+        print_frames();
+        return ExitCode::SUCCESS;
+    }
 
     println!("{cli:#?}");
 
