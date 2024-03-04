@@ -22,6 +22,9 @@ fn print_usage() {
     eprintln!("  --FRAME= DESC LANG TEXT  Set the value of FRAME (COMM, USLT).");
     eprintln!("");
     eprintln!("If no get or set options are supplied, all frames are printed.");
+    eprintln!("Any number of get and set options can be passed in any order.");
+    eprintln!("Get options are always evaluated before set options. Both get and");
+    eprintln!("set options are evaluated in the order in which they were passed.");
 }
 
 /// Prints the available frames.
