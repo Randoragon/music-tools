@@ -3,30 +3,6 @@ use std::collections::HashMap;
 use std::process::ExitCode;
 use anyhow::{anyhow, Result};
 
-/// Prints how to use the program.
-fn print_usage() {
-    eprintln!("Usage:  rsid3 [OPTION] FILE...");
-    eprintln!("");
-    eprintln!("Reads or writes ID3v2 tags in mp3 files.");
-    eprintln!("Supported standards: ID3v2.2, ID3v2.3, ID3v2.4.");
-    eprintln!("");
-    eprintln!("Options:");
-    eprintln!("  -h, --help               Show this help and exit.");
-    eprintln!("  -L, --list-frames        List all supported frames.");
-    eprintln!("  -d SEP, --delimiter SEP  Separate multiple printed values with SEP.");
-    eprintln!("  -0, --null-delimited     Separate multiple printed values with the null byte.");
-    eprintln!("  --FRAME                  Print the value of FRAME.");
-    eprintln!("  --FRAME DESC             Print the value of FRAME (TXXX, WXXX).");
-    eprintln!("  --FRAME DESC LANG        Print the value of FRAME (COMM, USLT).");
-    eprintln!("  --FRAME= DESC TEXT       Set the value of FRAME (TXXX, WXXX).");
-    eprintln!("  --FRAME= DESC LANG TEXT  Set the value of FRAME (COMM, USLT).");
-    eprintln!("");
-    eprintln!("If no get or set options are supplied, all frames are printed.");
-    eprintln!("Any number of get and set options can be passed in any order.");
-    eprintln!("Get options are always evaluated before set options. Both get and");
-    eprintln!("set options are evaluated in the order in which they were passed.");
-}
-
 /// Represents all options passed to the program on the command line.
 #[derive(Debug)]
 struct Cli {
@@ -260,6 +236,30 @@ impl Id3Frame {
 }
 
 impl Cli {
+    /// Prints how to use the program.
+    fn print_usage() {
+        eprintln!("Usage:  rsid3 [OPTION] FILE...");
+        eprintln!("");
+        eprintln!("Reads or writes ID3v2 tags in mp3 files.");
+        eprintln!("Supported standards: ID3v2.2, ID3v2.3, ID3v2.4.");
+        eprintln!("");
+        eprintln!("Options:");
+        eprintln!("  -h, --help               Show this help and exit.");
+        eprintln!("  -L, --list-frames        List all supported frames.");
+        eprintln!("  -d SEP, --delimiter SEP  Separate multiple printed values with SEP.");
+        eprintln!("  -0, --null-delimited     Separate multiple printed values with the null byte.");
+        eprintln!("  --FRAME                  Print the value of FRAME.");
+        eprintln!("  --FRAME DESC             Print the value of FRAME (TXXX, WXXX).");
+        eprintln!("  --FRAME DESC LANG        Print the value of FRAME (COMM, USLT).");
+        eprintln!("  --FRAME= DESC TEXT       Set the value of FRAME (TXXX, WXXX).");
+        eprintln!("  --FRAME= DESC LANG TEXT  Set the value of FRAME (COMM, USLT).");
+        eprintln!("");
+        eprintln!("If no get or set options are supplied, all frames are printed.");
+        eprintln!("Any number of get and set options can be passed in any order.");
+        eprintln!("Get options are always evaluated before set options. Both get and");
+        eprintln!("set options are evaluated in the order in which they were passed.");
+    }
+
     /// Construct a Cli object representing passed command-line arguments.
     fn parse_args() -> Result<Self> {
         let args: Vec<String> = args().collect();
@@ -1202,7 +1202,7 @@ fn main() -> ExitCode {
     };
 
     if cli.help {
-        print_usage();
+        Cli::print_usage();
         return ExitCode::SUCCESS;
     }
 
