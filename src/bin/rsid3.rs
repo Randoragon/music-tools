@@ -12,6 +12,7 @@ struct Cli {
     null_delimited: bool,
     get_frames: Vec<Id3Frame>,
     set_frames: Vec<Id3Frame>,
+    files: Vec<String>,
 }
 
 /// A single ID3v2 frame (+ content, if any).
@@ -287,7 +288,7 @@ impl Cli {
                     delimiter = Some(((args[i])[2..]).to_string());
                 },
                 "-0" | "--null-delimited" => { null_delimited = true; },
-                "--" => break,
+                "--" => { i += 1; break; },
 
                 "--AENC" => { get_frames.push(Id3Frame::AENC(None)); },
                 "--APIC" => { get_frames.push(Id3Frame::APIC(None)); },
@@ -1181,6 +1182,10 @@ impl Cli {
             i += 1;
         }
 
+        let files = (i..args.len())
+            .map(|x| args[x].clone())
+            .collect();
+
         Ok(Cli {
             help,
             list_frames,
@@ -1188,6 +1193,7 @@ impl Cli {
             delimiter,
             null_delimited,
             set_frames,
+            files,
         })
     }
 }
