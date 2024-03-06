@@ -2,6 +2,9 @@ use std::env::args;
 use std::collections::HashMap;
 use std::process::ExitCode;
 use anyhow::{anyhow, Result};
+use id3::{Tag, TagLike};
+use std::fs::File;
+use std::io::{Read, Write};
 
 /// Represents all options passed to the program on the command line.
 #[derive(Debug)]
@@ -1198,6 +1201,18 @@ impl Cli {
     }
 }
 
+/// Prints frames from a file, with a custom delimiter.
+fn print_file_frames(fpath: &str, frames: &Vec<Id3Frame>, delimiter: &str) -> Result<()> {
+    let tag = match Tag::read_from_path(fpath) {
+        Ok(tag) => tag,
+        Err(e) => return Err(anyhow!("failed to read tags from file '{fpath}': {e}")),
+    };
+
+    todo!();
+
+    Ok(())
+}
+
 fn main() -> ExitCode {
     let cli = match Cli::parse_args() {
         Ok(cli) => cli,
@@ -1217,6 +1232,29 @@ fn main() -> ExitCode {
         return ExitCode::SUCCESS;
     }
 
+    // Define the delimiter
+    if cli.delimiter.is_some() && cli.null_delimited {
+        eprintln!("rsid3: --delimiter and --null-delimited options are mutually exclusive");
+        return ExitCode::FAILURE;
+    }
+    let delimiter = if cli.null_delimited {
+        '\0'.to_string()
+    } else {
+        cli.delimiter.clone().unwrap_or('\n'.to_string())
+    };
+
+    // Handle all get options
+    for fpath in &cli.files {
+        if let Err(e) = print_file_frames(fpath, &cli.get_frames, &delimiter) {
+            eprintln!("rsid3: {e}");
+            return ExitCode::FAILURE;
+        }
+    }
+
+    // Handle all set options
+    todo!();
+
+    println!("{delimiter:?}");
     println!("{cli:#?}");
 
     ExitCode::SUCCESS
