@@ -179,11 +179,6 @@ impl Cli {
                 "-0" | "--null-delimited" => { null_delimited = true; },
                 "--" => { i += 1; break; },
 
-                // All parameterless getters
-                str if Cli::is_getter_arg(str) => {
-                    get_frames.push(Frame::text(&str[2..], ""));
-                },
-
                 "--COMM" => {
                     if i + 2 >= args.len() {
                         return Err(anyhow!("2 arguments expected after --COMM"));
@@ -232,13 +227,9 @@ impl Cli {
                     i += 1;
                 },
 
-                // All parameterless setters
-                str if Cli::is_setter_arg(str) => {
-                    if i + 1 >= args.len() {
-                        return Err(anyhow!("1 argument expected after {str}"));
-                    }
-                    let text = args[i + 1].clone();
-                    set_frames.push(Frame::text(&str[2..str.len()], text));
+                // All parameterless getters
+                str if Cli::is_getter_arg(str) => {
+                    get_frames.push(Frame::text(&str[2..], ""));
                 },
 
                 "--COMM=" => {
@@ -287,6 +278,15 @@ impl Cli {
                     };
                     set_frames.push(Frame::with_content("WXXX", Content::ExtendedLink(extended_link)));
                     i += 2;
+                },
+
+                // All parameterless setters
+                str if Cli::is_setter_arg(str) => {
+                    if i + 1 >= args.len() {
+                        return Err(anyhow!("1 argument expected after {str}"));
+                    }
+                    let text = args[i + 1].clone();
+                    set_frames.push(Frame::text(&str[2..str.len()], text));
                 },
 
                 str => {
