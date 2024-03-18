@@ -326,6 +326,111 @@ impl Cli {
     }
 }
 
+/// Get text contents from a tag, based on a frame query.
+fn get_text_from_tag<'a>(tag: &'a Tag, frame: &Frame) -> Result<&'a str> {
+    match frame.id() {
+        "TXXX" => {
+            let desc_query = match frame.content().extended_text() {
+                Some(extended_text) => &extended_text.description,
+                None => panic!("frame claims to be TXXX but has no extended text content"),
+            };
+            for txxx in tag.frames().filter(|&f| f.id() == "TXXX") {
+                let extended_text = match txxx.content().extended_text() {
+                    Some(extended_text) => extended_text,
+                    None => {
+                        eprintln!("Invalid TXXX frame found: {txxx:#?}");
+                        continue;
+                    },
+                };
+                if extended_text.description == *desc_query {
+                    return Ok(&extended_text.value);
+                }
+            }
+            return Err(anyhow!("TXXX frame with description '{desc_query}' not found"));
+        },
+        "WXXX" => {
+            let desc_query = match frame.content().extended_link() {
+                Some(extended_link) => &extended_link.description,
+                None => panic!("frame claims to be WXXX but has no extended link content"),
+            };
+            for wxxx in tag.frames().filter(|&f| f.id() == "WXXX") {
+                let extended_link = match wxxx.content().extended_link() {
+                    Some(extended_link) => extended_link,
+                    None => {
+                        eprintln!("Invalid WXXX frame found: {wxxx:#?}");
+                        continue;
+                    },
+                };
+                if extended_link.description == *desc_query {
+                    return Ok(&extended_link.link);
+                }
+            }
+            return Err(anyhow!("WXXX frame with description '{desc_query}' not found"));
+        },
+        "COMM" => {
+            let (desc_query, lang_query) = match frame.content().comment() {
+                Some(comment) => (&comment.description, &comment.lang),
+                None => panic!("frame claims to be COMM but has no comment content"),
+            };
+            for comm in tag.frames().filter(|&f| f.id() == "COMM") {
+                let comment = match comm.content().comment() {
+                    Some(comment) => comment,
+                    None => {
+                        eprintln!("Invalid COMM frame found: {comm:#?}");
+                        continue;
+                    },
+                };
+                if comment.description == *desc_query && comment.lang == *lang_query {
+                    return Ok(&comment.text);
+                }
+            }
+            return Err(anyhow!("COMM frame with description '{desc_query}' and language '{lang_query}' not found"));
+        },
+        "USLT" => {
+            let (desc_query, lang_query) = match frame.content().lyrics() {
+                Some(lyrics) => (&lyrics.description, &lyrics.lang),
+                None => panic!("frame claims to be USLT but has no lyrics content"),
+            };
+            for uslt in tag.frames().filter(|&f| f.id() == "USLT") {
+                let lyrics = match uslt.content().lyrics() {
+                    Some(lyrics) => lyrics,
+                    None => {
+                        eprintln!("Invalid USLT frame found: {uslt:#?}");
+                        continue;
+                    },
+                };
+                if lyrics.description == *desc_query && lyrics.lang == *lang_query {
+                    return Ok(&lyrics.text);
+                }
+            }
+            return Err(anyhow!("USLT frame with description '{desc_query}' and language '{lang_query}' not found"));
+        },
+        x if x.starts_with("T") => {
+            let text_frame = match tag.get(x) {
+                Some(frame) => frame,
+                None => return Err(anyhow!("frame not found: {x}")),
+            };
+            let text = match text_frame.content().text() {
+                Some(text) => text,
+                None => return Err(anyhow!("frame claims to be {x} but has no text content")),
+            };
+            return Ok(text)
+        }
+        x if x.starts_with("W") => {
+            let text_frame = match tag.get(x) {
+                Some(frame) => frame,
+                None => return Err(anyhow!("frame not found: {x}")),
+            };
+            let link = match text_frame.content().link() {
+                Some(link) => link,
+                None => return Err(anyhow!("frame claims to be {x} but has no link content")),
+            };
+            return Ok(link)
+        }
+        frame => return Err(anyhow!("Reading from {frame} is not supported")),
+    }
+}
+
 /// Prints frames from a file, with a custom delimiter.
 fn print_file_frames(fpath: &str, frames: &Vec<Frame>, delimiter: &str) -> Result<()> {
     let tag = match Tag::read_from_path(fpath) {
@@ -333,7 +438,17 @@ fn print_file_frames(fpath: &str, frames: &Vec<Frame>, delimiter: &str) -> Resul
         Err(e) => return Err(anyhow!("failed to read tags from file '{fpath}': {e}")),
     };
 
-    todo!();
+    let mut is_first = true;
+    for frame in frames {
+        match is_first {
+            true => is_first = false,
+            false => print!("{delimiter}"),
+        }
+        match get_text_from_tag(&tag, frame) {
+            Ok(text) => println!("{text}"),
+            Err(e) => eprintln!("rsid3: {e}"),
+        }
+    }
 
     Ok(())
 }
