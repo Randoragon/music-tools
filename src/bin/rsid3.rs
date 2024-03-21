@@ -35,6 +35,9 @@ impl Cli {
         eprintln!("  --FRAME= DESC TEXT       Set the value of FRAME (TXXX, WXXX).");
         eprintln!("  --FRAME= DESC LANG TEXT  Set the value of FRAME (COMM, USLT).");
         eprintln!("");
+        eprintln!("If the value of LANG is irrelevant when getting a frame, 'first'");
+        eprintln!("can be passed instead, in which case the first frame with a matching");
+        eprintln!("DESC is printed.");
         eprintln!("If no get or set options are supplied, all frames are printed.");
         eprintln!("Any number of get and set options can be passed in any order.");
         eprintln!("Get options are always evaluated before set options. Both get and");
@@ -380,7 +383,7 @@ fn get_text_from_tag<'a>(tag: &'a Tag, frame: &Frame) -> Result<&'a str> {
                         continue;
                     },
                 };
-                if comment.description == *desc_query && comment.lang == *lang_query {
+                if comment.description == *desc_query && (comment.lang == *lang_query || *lang_query == "first") {
                     return Ok(&comment.text);
                 }
             }
@@ -399,7 +402,7 @@ fn get_text_from_tag<'a>(tag: &'a Tag, frame: &Frame) -> Result<&'a str> {
                         continue;
                     },
                 };
-                if lyrics.description == *desc_query && lyrics.lang == *lang_query {
+                if lyrics.description == *desc_query && (lyrics.lang == *lang_query || *lang_query == "first") {
                     return Ok(&lyrics.text);
                 }
             }
