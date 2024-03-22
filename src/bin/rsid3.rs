@@ -46,39 +46,8 @@ impl Cli {
 
     /// Prints the available frames.
     fn print_all_frames() {
-        // println!("AENC	Audio encryption");
-        // println!("APIC	Attached (or linked) picture");
-        // println!("ASPI	Audio seek point index");
-        // println!("CHAP	Chapter");
+        println!("Read-write frames:");
         println!("COMM	User comment (DESC, LANG, TEXT)");
-        // println!("COMR	Commercial frame");
-        // println!("CTOC	Table of contents");
-        // println!("ENCR	Encryption method registration");
-        // println!("EQU2	Equalization 2");
-        // println!("ETCO	Event timing codes");
-        // println!("GEOB	General encapsulated object");
-        // println!("GRID	Group identification registration");
-        // println!("GRP1	iTunes grouping");
-        // println!("IPLS	Involved people list");
-        // println!("LINK	Linked information");
-        // println!("MCDI	Binary dump of CD's TOC");
-        // println!("MLLT	MPEG location lookup table");
-        // println!("MVIN	iTunes movement number/count");
-        // println!("MVNM	iTunes movement name");
-        // println!("OWNE	Ownership frame");
-        // println!("PCNT	Play counter");
-        // println!("PCST	iTunes podcast flag");
-        // println!("POPM	Popularimeter");
-        // println!("POSS	Position synchronisation frame");
-        // println!("PRIV	Private frame");
-        // println!("RBUF	Recommended buffer size");
-        // println!("RVA2	Relative volume adjustment 2");
-        // println!("RVAD	Relative volume adjustment");
-        // println!("RVRB	Reverb");
-        // println!("SEEK	Seek frame");
-        // println!("SIGN	Signature frame");
-        // println!("SYLT	Synchronised lyrics/text");
-        // println!("SYTC	Synchronised tempo codes");
         println!("TALB	Album");
         println!("TBPM	Beats per minute");
         println!("TCAT	iTunes podcast category");
@@ -138,8 +107,6 @@ impl Cli {
         println!("TSST	Set subtitle");
         println!("TXXX	User-defined text data (DESC, TEXT)");
         println!("TYER	Year of recording");
-        // println!("UFID	Unique file identifier");
-        // println!("USER	Terms of use");
         println!("USLT	Unsynchronised lyrics/text transcription (DESC, LANG, TEXT)");
         println!("WCOM	Commercial information");
         println!("WCOP	Copyright information");
@@ -151,6 +118,42 @@ impl Cli {
         println!("WPAY	Payment information");
         println!("WPUB	Official publisher information");
         println!("WXXX	User-defined URL data (DESC, URL)");
+        println!("");
+        println!("Read-only frames (rudimentary support):");
+        println!("AENC	Audio encryption");
+        println!("APIC	Attached (or linked) picture");
+        println!("ASPI	Audio seek point index");
+        println!("CHAP	Chapter");
+        println!("COMR	Commercial frame");
+        println!("CTOC	Table of contents");
+        println!("ENCR	Encryption method registration");
+        println!("EQU2	Equalization 2");
+        println!("ETCO	Event timing codes");
+        println!("GEOB	General encapsulated object");
+        println!("GRID	Group identification registration");
+        println!("GRP1	iTunes grouping");
+        println!("IPLS	Involved people list");
+        println!("LINK	Linked information");
+        println!("MCDI	Binary dump of CD's TOC");
+        println!("MLLT	MPEG location lookup table");
+        println!("MVIN	iTunes movement number/count");
+        println!("MVNM	iTunes movement name");
+        println!("OWNE	Ownership frame");
+        println!("PCNT	Play counter");
+        println!("PCST	iTunes podcast flag");
+        println!("POPM	Popularimeter");
+        println!("POSS	Position synchronisation frame");
+        println!("PRIV	Private frame");
+        println!("RBUF	Recommended buffer size");
+        println!("RVA2	Relative volume adjustment 2");
+        println!("RVAD	Relative volume adjustment");
+        println!("RVRB	Reverb");
+        println!("SEEK	Seek frame");
+        println!("SIGN	Signature frame");
+        println!("SYLT	Synchronised lyrics/text");
+        println!("SYTC	Synchronised tempo codes");
+        println!("UFID	Unique file identifier");
+        println!("USER	Terms of use");
     }
 
     /// Construct a Cli object representing passed command-line arguments.
@@ -319,18 +322,13 @@ impl Cli {
 
     /// Checks if a command-line argument is a getter argument.
     fn is_getter_arg(arg: &str) -> bool {
-        arg.starts_with("--") && Self::is_frame_supported(&arg[2..])
+        arg.starts_with("--") && (&arg[2..]).chars()
+            .all(|c| c.is_ascii_uppercase() || c.is_ascii_digit())
     }
 
     /// Checks if a command-line argument is a setter argument.
     fn is_setter_arg(arg: &str) -> bool {
-        arg.starts_with("--") && arg.ends_with("=")
-        && Self::is_frame_supported(&arg[2..(arg.len() - 1)])
-    }
-
-    /// Returns whether a frame is supported.
-    fn is_frame_supported(frame_id: &str) -> bool {
-        match frame_id {
+        arg.starts_with("--") && arg.ends_with("=") && match &arg[2..(arg.len() - 1)] {
             "COMM" | "TALB" | "TBPM" | "TCAT" | "TCMP" | "TCOM" | "TCON" | "TCOP" |
             "TDAT" | "TDEN" | "TDES" | "TDLY" | "TDOR" | "TDRC" | "TDRL" | "TDTG" |
             "TENC" | "TEXT" | "TFLT" | "TGID" | "TIME" | "TIPL" | "TIT1" | "TIT2" |
@@ -346,7 +344,7 @@ impl Cli {
 }
 
 /// Get text contents from a tag, based on a frame query.
-fn get_text_from_tag<'a>(tag: &'a Tag, frame: &Frame) -> Result<&'a str> {
+fn print_text_from_tag<'a>(tag: &'a Tag, frame: &Frame) -> Result<()> {
     match frame.id() {
         "TXXX" => {
             let desc_query = match frame.content().extended_text() {
@@ -362,7 +360,8 @@ fn get_text_from_tag<'a>(tag: &'a Tag, frame: &Frame) -> Result<&'a str> {
                     },
                 };
                 if extended_text.description == *desc_query {
-                    return Ok(&extended_text.value);
+                    println!("{}", extended_text.value);
+                    return Ok(());
                 }
             }
             return Err(anyhow!("TXXX frame with description '{desc_query}' not found"));
@@ -381,7 +380,8 @@ fn get_text_from_tag<'a>(tag: &'a Tag, frame: &Frame) -> Result<&'a str> {
                     },
                 };
                 if extended_link.description == *desc_query {
-                    return Ok(&extended_link.link);
+                    println!("{}", extended_link.link);
+                    return Ok(());
                 }
             }
             return Err(anyhow!("WXXX frame with description '{desc_query}' not found"));
@@ -400,7 +400,8 @@ fn get_text_from_tag<'a>(tag: &'a Tag, frame: &Frame) -> Result<&'a str> {
                     },
                 };
                 if comment.description == *desc_query && (comment.lang == *lang_query || *lang_query == "first") {
-                    return Ok(&comment.text);
+                    println!("{}", comment.text);
+                    return Ok(());
                 }
             }
             return Err(anyhow!("COMM frame with description '{desc_query}' and language '{lang_query}' not found"));
@@ -419,7 +420,8 @@ fn get_text_from_tag<'a>(tag: &'a Tag, frame: &Frame) -> Result<&'a str> {
                     },
                 };
                 if lyrics.description == *desc_query && (lyrics.lang == *lang_query || *lang_query == "first") {
-                    return Ok(&lyrics.text);
+                    println!("{}", lyrics.text);
+                    return Ok(());
                 }
             }
             return Err(anyhow!("USLT frame with description '{desc_query}' and language '{lang_query}' not found"));
@@ -433,8 +435,9 @@ fn get_text_from_tag<'a>(tag: &'a Tag, frame: &Frame) -> Result<&'a str> {
                 Some(text) => text,
                 None => return Err(anyhow!("Frame claims to be {x} but has no text content")),
             };
-            return Ok(text)
-        }
+            println!("{}", text);
+            return Ok(());
+        },
         x if x.starts_with("W") => {
             let text_frame = match tag.get(x) {
                 Some(frame) => frame,
@@ -444,9 +447,17 @@ fn get_text_from_tag<'a>(tag: &'a Tag, frame: &Frame) -> Result<&'a str> {
                 Some(link) => link,
                 None => return Err(anyhow!("Frame claims to be {x} but has no link content")),
             };
-            return Ok(link)
-        }
-        frame => return Err(anyhow!("Reading from {frame} is not supported")),
+            println!("{}", link);
+            return Ok(());
+        },
+        x => {
+            let frame = match tag.get(x) {
+                Some(frame) => frame,
+                None => return Err(anyhow!("Frame not found: {x}")),
+            };
+            println!("{}", frame.content());
+            return Ok(());
+        },
     }
 }
 
@@ -463,9 +474,8 @@ fn print_file_frames(fpath: &str, frames: &Vec<Frame>, delimiter: &str) -> Resul
             true => is_first = false,
             false => print!("{delimiter}"),
         }
-        match get_text_from_tag(&tag, frame) {
-            Ok(text) => println!("{text}"),
-            Err(e) => eprintln!("rsid3: {e}"),
+        if let Err(e) = print_text_from_tag(&tag, frame) {
+            eprintln!("rsid3: {e}");
         }
     }
 
