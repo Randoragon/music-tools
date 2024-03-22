@@ -35,13 +35,13 @@ impl Cli {
         eprintln!("  --FRAME= DESC TEXT       Set the value of FRAME (TXXX, WXXX).");
         eprintln!("  --FRAME= DESC LANG TEXT  Set the value of FRAME (COMM, USLT).");
         eprintln!("");
-        eprintln!("If the value of LANG is irrelevant when getting a frame, 'first'");
+        eprintln!("If the value of LANG is irrelevant when printing a frame, 'first'");
         eprintln!("can be passed instead, in which case the first frame with a matching");
         eprintln!("DESC is printed.");
-        eprintln!("If no get or set options are supplied, all frames are printed.");
-        eprintln!("Any number of get and set options can be passed in any order.");
-        eprintln!("Get options are always evaluated before set options. Both get and");
-        eprintln!("set options are evaluated in the order in which they were passed.");
+        eprintln!("If no print or set options are supplied, all frames are printed.");
+        eprintln!("Any number of print and set options can be passed in any order.");
+        eprintln!("Print options are always evaluated before set options. Both print");
+        eprintln!("and set options are evaluated in the order in which they were passed.");
     }
 
     /// Prints the available frames.
