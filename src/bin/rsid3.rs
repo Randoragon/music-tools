@@ -349,7 +349,7 @@ fn print_text_from_tag<'a>(tag: &'a Tag, frame: &Frame) -> Result<()> {
         "TXXX" => {
             let desc_query = match frame.content().extended_text() {
                 Some(extended_text) => &extended_text.description,
-                None => panic!("frame claims to be TXXX but has no extended text content"),
+                None => return Err(anyhow!("Frame claims to be TXXX but has no extended text content")),
             };
             for txxx in tag.frames().filter(|&f| f.id() == "TXXX") {
                 let extended_text = match txxx.content().extended_text() {
@@ -369,7 +369,7 @@ fn print_text_from_tag<'a>(tag: &'a Tag, frame: &Frame) -> Result<()> {
         "WXXX" => {
             let desc_query = match frame.content().extended_link() {
                 Some(extended_link) => &extended_link.description,
-                None => panic!("frame claims to be WXXX but has no extended link content"),
+                None => return Err(anyhow!("frame claims to be WXXX but has no extended link content")),
             };
             for wxxx in tag.frames().filter(|&f| f.id() == "WXXX") {
                 let extended_link = match wxxx.content().extended_link() {
@@ -389,7 +389,7 @@ fn print_text_from_tag<'a>(tag: &'a Tag, frame: &Frame) -> Result<()> {
         "COMM" => {
             let (desc_query, lang_query) = match frame.content().comment() {
                 Some(comment) => (&comment.description, &comment.lang),
-                None => panic!("frame claims to be COMM but has no comment content"),
+                None => return Err(anyhow!("frame claims to be COMM but has no comment content")),
             };
             for comm in tag.frames().filter(|&f| f.id() == "COMM") {
                 let comment = match comm.content().comment() {
@@ -409,7 +409,7 @@ fn print_text_from_tag<'a>(tag: &'a Tag, frame: &Frame) -> Result<()> {
         "USLT" => {
             let (desc_query, lang_query) = match frame.content().lyrics() {
                 Some(lyrics) => (&lyrics.description, &lyrics.lang),
-                None => panic!("frame claims to be USLT but has no lyrics content"),
+                None => return Err(anyhow!("frame claims to be USLT but has no lyrics content")),
             };
             for uslt in tag.frames().filter(|&f| f.id() == "USLT") {
                 let lyrics = match uslt.content().lyrics() {
