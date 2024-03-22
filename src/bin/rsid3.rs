@@ -465,22 +465,22 @@ fn get_text_from_tag<'a>(tag: &'a Tag, frame: &Frame) -> Result<&'a str> {
         x if x.starts_with("T") => {
             let text_frame = match tag.get(x) {
                 Some(frame) => frame,
-                None => return Err(anyhow!("frame not found: {x}")),
+                None => return Err(anyhow!("Frame not found: {x}")),
             };
             let text = match text_frame.content().text() {
                 Some(text) => text,
-                None => return Err(anyhow!("frame claims to be {x} but has no text content")),
+                None => return Err(anyhow!("Frame claims to be {x} but has no text content")),
             };
             return Ok(text)
         }
         x if x.starts_with("W") => {
             let text_frame = match tag.get(x) {
                 Some(frame) => frame,
-                None => return Err(anyhow!("frame not found: {x}")),
+                None => return Err(anyhow!("Frame not found: {x}")),
             };
             let link = match text_frame.content().link() {
                 Some(link) => link,
-                None => return Err(anyhow!("frame claims to be {x} but has no link content")),
+                None => return Err(anyhow!("Frame claims to be {x} but has no link content")),
             };
             return Ok(link)
         }
@@ -492,7 +492,7 @@ fn get_text_from_tag<'a>(tag: &'a Tag, frame: &Frame) -> Result<&'a str> {
 fn print_file_frames(fpath: &str, frames: &Vec<Frame>, delimiter: &str) -> Result<()> {
     let tag = match Tag::read_from_path(fpath) {
         Ok(tag) => tag,
-        Err(e) => return Err(anyhow!("failed to read tags from file '{fpath}': {e}")),
+        Err(e) => return Err(anyhow!("Failed to read tags from file '{fpath}': {e}")),
     };
 
     let mut is_first = true;
@@ -514,7 +514,7 @@ fn print_file_frames(fpath: &str, frames: &Vec<Frame>, delimiter: &str) -> Resul
 fn set_file_frames(fpath: &str, frames: Vec<Frame>) -> Result<()> {
     let mut tag = match Tag::read_from_path(fpath) {
         Ok(tag) => tag,
-        Err(e) => return Err(anyhow!("failed to read tags from file '{fpath}': {e}")),
+        Err(e) => return Err(anyhow!("Failed to read tags from file '{fpath}': {e}")),
     };
 
     let mut was_modified = false;
@@ -524,13 +524,13 @@ fn set_file_frames(fpath: &str, frames: Vec<Frame>) -> Result<()> {
                 let _ = tag.add_frame(frame);
                 was_modified = true;
             },
-            _ => return Err(anyhow!("writing to {frame} is not supported")),
+            _ => return Err(anyhow!("Writing to {frame} is not supported")),
         }
     }
 
     if was_modified {
         if let Err(e) = tag.write_to_path(fpath, tag.version()) {
-            return Err(anyhow!("failed to write tags to '{fpath}': {e}"));
+            return Err(anyhow!("Failed to write tags to '{fpath}': {e}"));
         }
     }
 
