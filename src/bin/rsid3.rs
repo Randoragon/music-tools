@@ -510,6 +510,33 @@ fn print_file_frames(fpath: &str, frames: &Vec<Frame>, delimiter: &str) -> Resul
     Ok(())
 }
 
+// Writes frames into a file. Previous values are overwritten, if any.
+fn set_file_frames(fpath: &str, frames: Vec<Frame>) -> Result<()> {
+    let mut tag = match Tag::read_from_path(fpath) {
+        Ok(tag) => tag,
+        Err(e) => return Err(anyhow!("failed to read tags from file '{fpath}': {e}")),
+    };
+
+    let mut was_modified = false;
+    for frame in frames {
+        match frame.id() {
+            x if x.starts_with("T") || x.starts_with("W") || x == "COMM" || x == "USLT" => {
+                let _ = tag.add_frame(frame);
+                was_modified = true;
+            },
+            _ => return Err(anyhow!("writing to {frame} is not supported")),
+        }
+    }
+
+    if was_modified {
+        if let Err(e) = tag.write_to_path(fpath, tag.version()) {
+            return Err(anyhow!("failed to write tags to '{fpath}': {e}"));
+        }
+    }
+
+    Ok(())
+}
+
 fn main() -> ExitCode {
     let cli = match Cli::parse_args() {
         Ok(cli) => cli,
@@ -549,10 +576,12 @@ fn main() -> ExitCode {
     }
 
     // Handle all set options
-    todo!();
-
-    println!("{delimiter:?}");
-    println!("{cli:#?}");
+    for fpath in &cli.files {
+        if let Err(e) = set_file_frames(fpath, cli.set_frames.to_owned()) {
+            eprintln!("rsid3: {e}");
+            return ExitCode::FAILURE;
+        }
+    }
 
     ExitCode::SUCCESS
 }
