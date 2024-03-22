@@ -46,39 +46,40 @@ impl Cli {
 
     /// Prints the available frames.
     fn print_all_frames() {
-        println!("AENC	Audio encryption");
-        println!("APIC	Attached (or linked) picture");
-        println!("ASPI	Audio seek point index");
-        println!("CHAP	Chapter");
+        println!("Supported frames:");
+        // println!("AENC	Audio encryption");
+        // println!("APIC	Attached (or linked) picture");
+        // println!("ASPI	Audio seek point index");
+        // println!("CHAP	Chapter");
         println!("COMM	User comment (DESC, LANG, TEXT)");
-        println!("COMR	Commercial frame");
-        println!("CTOC	Table of contents");
-        println!("ENCR	Encryption method registration");
-        println!("EQU2	Equalization 2");
-        println!("ETCO	Event timing codes");
-        println!("GEOB	General encapsulated object");
-        println!("GRID	Group identification registration");
-        println!("GRP1	iTunes grouping");
-        println!("IPLS	Involved people list");
-        println!("LINK	Linked information");
-        println!("MCDI	Binary dump of CD's TOC");
-        println!("MLLT	MPEG location lookup table");
-        println!("MVIN	iTunes movement number/count");
-        println!("MVNM	iTunes movement name");
-        println!("OWNE	Ownership frame");
-        println!("PCNT	Play counter");
-        println!("PCST	iTunes podcast flag");
-        println!("POPM	Popularimeter");
-        println!("POSS	Position synchronisation frame");
-        println!("PRIV	Private frame");
-        println!("RBUF	Recommended buffer size");
-        println!("RVA2	Relative volume adjustment 2");
-        println!("RVAD	Relative volume adjustment");
-        println!("RVRB	Reverb");
-        println!("SEEK	Seek frame");
-        println!("SIGN	Signature frame");
-        println!("SYLT	Synchronised lyrics/text");
-        println!("SYTC	Synchronised tempo codes");
+        // println!("COMR	Commercial frame");
+        // println!("CTOC	Table of contents");
+        // println!("ENCR	Encryption method registration");
+        // println!("EQU2	Equalization 2");
+        // println!("ETCO	Event timing codes");
+        // println!("GEOB	General encapsulated object");
+        // println!("GRID	Group identification registration");
+        // println!("GRP1	iTunes grouping");
+        // println!("IPLS	Involved people list");
+        // println!("LINK	Linked information");
+        // println!("MCDI	Binary dump of CD's TOC");
+        // println!("MLLT	MPEG location lookup table");
+        // println!("MVIN	iTunes movement number/count");
+        // println!("MVNM	iTunes movement name");
+        // println!("OWNE	Ownership frame");
+        // println!("PCNT	Play counter");
+        // println!("PCST	iTunes podcast flag");
+        // println!("POPM	Popularimeter");
+        // println!("POSS	Position synchronisation frame");
+        // println!("PRIV	Private frame");
+        // println!("RBUF	Recommended buffer size");
+        // println!("RVA2	Relative volume adjustment 2");
+        // println!("RVAD	Relative volume adjustment");
+        // println!("RVRB	Reverb");
+        // println!("SEEK	Seek frame");
+        // println!("SIGN	Signature frame");
+        // println!("SYLT	Synchronised lyrics/text");
+        // println!("SYTC	Synchronised tempo codes");
         println!("TALB	Album");
         println!("TBPM	Beats per minute");
         println!("TCAT	iTunes podcast category");
@@ -138,8 +139,8 @@ impl Cli {
         println!("TSST	Set subtitle");
         println!("TXXX	User-defined text data (DESC, TEXT)");
         println!("TYER	Year of recording");
-        println!("UFID	Unique file identifier");
-        println!("USER	Terms of use");
+        // println!("UFID	Unique file identifier");
+        // println!("USER	Terms of use");
         println!("USLT	Unsynchronised lyrics/text transcription (DESC, LANG, TEXT)");
         println!("WCOM	Commercial information");
         println!("WCOP	Copyright information");
@@ -151,6 +152,42 @@ impl Cli {
         println!("WPAY	Payment information");
         println!("WPUB	Official publisher information");
         println!("WXXX	User-defined URL data (DESC, URL)");
+        println!("");
+        println!("Unsupported frames:");
+        println!("AENC	Audio encryption");
+        println!("APIC	Attached (or linked) picture");
+        println!("ASPI	Audio seek point index");
+        println!("CHAP	Chapter");
+        println!("COMR	Commercial frame");
+        println!("CTOC	Table of contents");
+        println!("ENCR	Encryption method registration");
+        println!("EQU2	Equalization 2");
+        println!("ETCO	Event timing codes");
+        println!("GEOB	General encapsulated object");
+        println!("GRID	Group identification registration");
+        println!("GRP1	iTunes grouping");
+        println!("IPLS	Involved people list");
+        println!("LINK	Linked information");
+        println!("MCDI	Binary dump of CD's TOC");
+        println!("MLLT	MPEG location lookup table");
+        println!("MVIN	iTunes movement number/count");
+        println!("MVNM	iTunes movement name");
+        println!("OWNE	Ownership frame");
+        println!("PCNT	Play counter");
+        println!("PCST	iTunes podcast flag");
+        println!("POPM	Popularimeter");
+        println!("POSS	Position synchronisation frame");
+        println!("PRIV	Private frame");
+        println!("RBUF	Recommended buffer size");
+        println!("RVA2	Relative volume adjustment 2");
+        println!("RVAD	Relative volume adjustment");
+        println!("RVRB	Reverb");
+        println!("SEEK	Seek frame");
+        println!("SIGN	Signature frame");
+        println!("SYLT	Synchronised lyrics/text");
+        println!("SYTC	Synchronised tempo codes");
+        println!("UFID	Unique file identifier");
+        println!("USER	Terms of use");
     }
 
     /// Construct a Cli object representing passed command-line arguments.
@@ -317,15 +354,31 @@ impl Cli {
         })
     }
 
-    /// Checks if a command-line argument is a getter argument
+    /// Checks if a command-line argument is a getter argument.
     fn is_getter_arg(arg: &str) -> bool {
-        arg.starts_with("--") && (&arg[2..]).chars().all(|c| c.is_ascii_uppercase() || c.is_ascii_digit())
+        arg.starts_with("--") && Self::is_frame_supported(&arg[2..])
     }
 
-    /// Checks if a command-line argument is a setter argument
+    /// Checks if a command-line argument is a setter argument.
     fn is_setter_arg(arg: &str) -> bool {
-        arg.starts_with("--") && arg.ends_with('=') && (&arg[2..arg.len()]).chars()
-            .all(|c| c.is_ascii_uppercase() || c.is_ascii_digit())
+        arg.starts_with("--") && arg.ends_with("=")
+        && Self::is_frame_supported(&arg[2..(arg.len() - 1)])
+    }
+
+    /// Returns whether a frame is supported.
+    fn is_frame_supported(frame_id: &str) -> bool {
+        match frame_id {
+            "COMM" | "TALB" | "TBPM" | "TCAT" | "TCMP" | "TCOM" | "TCON" | "TCOP" |
+            "TDAT" | "TDEN" | "TDES" | "TDLY" | "TDOR" | "TDRC" | "TDRL" | "TDTG" |
+            "TENC" | "TEXT" | "TFLT" | "TGID" | "TIME" | "TIPL" | "TIT1" | "TIT2" |
+            "TIT3" | "TKEY" | "TKWD" | "TLAN" | "TLEN" | "TMCL" | "TMED" | "TMOO" |
+            "TOAL" | "TOFN" | "TOLY" | "TOPE" | "TORY" | "TOWN" | "TPE1" | "TPE2" |
+            "TPE3" | "TPE4" | "TPOS" | "TPRO" | "TPUB" | "TRCK" | "TRDA" | "TRSN" |
+            "TRSO" | "TSIZ" | "TSO2" | "TSOA" | "TSOC" | "TSOP" | "TSOT" | "TSRC" |
+            "TSSE" | "TSST" | "TXXX" | "TYER" | "USLT" | "WCOM" | "WCOP" | "WFED" |
+            "WOAF" | "WOAR" | "WOAS" | "WORS" | "WPAY" | "WPUB" | "WXXX" => true,
+            _ => false,
+        }
     }
 }
 
