@@ -46,7 +46,6 @@ impl Cli {
 
     /// Prints the available frames.
     fn print_all_frames() {
-        println!("Supported frames:");
         // println!("AENC	Audio encryption");
         // println!("APIC	Attached (or linked) picture");
         // println!("ASPI	Audio seek point index");
@@ -152,42 +151,6 @@ impl Cli {
         println!("WPAY	Payment information");
         println!("WPUB	Official publisher information");
         println!("WXXX	User-defined URL data (DESC, URL)");
-        println!("");
-        println!("Unsupported frames:");
-        println!("AENC	Audio encryption");
-        println!("APIC	Attached (or linked) picture");
-        println!("ASPI	Audio seek point index");
-        println!("CHAP	Chapter");
-        println!("COMR	Commercial frame");
-        println!("CTOC	Table of contents");
-        println!("ENCR	Encryption method registration");
-        println!("EQU2	Equalization 2");
-        println!("ETCO	Event timing codes");
-        println!("GEOB	General encapsulated object");
-        println!("GRID	Group identification registration");
-        println!("GRP1	iTunes grouping");
-        println!("IPLS	Involved people list");
-        println!("LINK	Linked information");
-        println!("MCDI	Binary dump of CD's TOC");
-        println!("MLLT	MPEG location lookup table");
-        println!("MVIN	iTunes movement number/count");
-        println!("MVNM	iTunes movement name");
-        println!("OWNE	Ownership frame");
-        println!("PCNT	Play counter");
-        println!("PCST	iTunes podcast flag");
-        println!("POPM	Popularimeter");
-        println!("POSS	Position synchronisation frame");
-        println!("PRIV	Private frame");
-        println!("RBUF	Recommended buffer size");
-        println!("RVA2	Relative volume adjustment 2");
-        println!("RVAD	Relative volume adjustment");
-        println!("RVRB	Reverb");
-        println!("SEEK	Seek frame");
-        println!("SIGN	Signature frame");
-        println!("SYLT	Synchronised lyrics/text");
-        println!("SYTC	Synchronised tempo codes");
-        println!("UFID	Unique file identifier");
-        println!("USER	Terms of use");
     }
 
     /// Construct a Cli object representing passed command-line arguments.
