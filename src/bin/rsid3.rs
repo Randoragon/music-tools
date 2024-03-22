@@ -32,6 +32,7 @@ impl Cli {
         eprintln!("  --FRAME                  Print the value of FRAME.");
         eprintln!("  --FRAME DESC             Print the value of FRAME (TXXX, WXXX).");
         eprintln!("  --FRAME DESC LANG        Print the value of FRAME (COMM, USLT).");
+        eprintln!("  --FRAME= TEXT            Set the value of FRAME.");
         eprintln!("  --FRAME= DESC TEXT       Set the value of FRAME (TXXX, WXXX).");
         eprintln!("  --FRAME= DESC LANG TEXT  Set the value of FRAME (COMM, USLT).");
         eprintln!("");
