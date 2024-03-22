@@ -482,6 +482,75 @@ fn print_file_frames(fpath: &str, frames: &Vec<Frame>, delimiter: &str) -> Resul
     Ok(())
 }
 
+/// Pretty-prints a single frame.
+fn print_frame_pretty(frame: &Frame) -> Result<()> {
+    match frame.id() {
+        "TXXX" => {
+            let extended_text = match frame.content().extended_text() {
+                Some(x) => x,
+                None => return Err(anyhow!("frame claims to be TXXX but has no extended text content")),
+            };
+            println!("{}[{}]: {}", frame.id(), extended_text.description, extended_text.value);
+        },
+        "WXXX" => {
+            let extended_link = match frame.content().extended_link() {
+                Some(x) => x,
+                None => return Err(anyhow!("frame claims to be WXXX but has no extended link content")),
+            };
+            println!("{}[{}]: {}", frame.id(), extended_link.description, extended_link.link);
+        },
+        "COMM" => {
+            let comment = match frame.content().comment() {
+                Some(x) => x,
+                None => return Err(anyhow!("frame claims to be COMM but has no comment content")),
+            };
+            println!("{}[{}]({}): {}", frame.id(), comment.description, comment.lang, comment.text);
+        },
+        "USLT" => {
+            let lyrics = match frame.content().lyrics() {
+                Some(x) => x,
+                None => return Err(anyhow!("frame claims to be USLT but has no lyrics content")),
+            };
+            println!("{}[{}][{}]: {}", frame.id(), lyrics.description, lyrics.lang, lyrics.text);
+        },
+        str if str.starts_with("T") => {
+            let text = match frame.content().text() {
+                Some(x) => x,
+                None => return Err(anyhow!("frame starts with T but has no text content")),
+            };
+            println!("{}: {}", frame.id(), text);
+        },
+        str if str.starts_with("W") => {
+            let link = match frame.content().link() {
+                Some(x) => x,
+                None => return Err(anyhow!("frame starts with W but has no link content")),
+            };
+            println!("{}: {}", frame.id(), link);
+        },
+        _ => {
+            println!("{}: {}", frame.id(), frame.content());
+        },
+    }
+    Ok(())
+}
+
+/// Pretty-prints all supported frames stored in the file.
+fn print_all_file_frames_pretty(fpath: &str) -> Result<()> {
+    let tag = match Tag::read_from_path(fpath) {
+        Ok(tag) => tag,
+        Err(e) => return Err(anyhow!("Failed to read tags from file '{fpath}': {e}")),
+    };
+
+    let n_frames = tag.frames().count();
+    println!("\n{}: {}, {} frame{}:", fpath, tag.version(), n_frames,
+        if n_frames == 1 { "" } else { "s" });
+    for frame in tag.frames() {
+        print_frame_pretty(frame)?;
+    }
+
+    Ok(())
+}
+
 // Writes frames into a file. Previous values are overwritten, if any.
 fn set_file_frames(fpath: &str, frames: Vec<Frame>) -> Result<()> {
     let mut tag = match Tag::read_from_path(fpath) {
@@ -552,6 +621,16 @@ fn main() -> ExitCode {
         if let Err(e) = set_file_frames(fpath, cli.set_frames.to_owned()) {
             eprintln!("rsid3: {e}");
             return ExitCode::FAILURE;
+        }
+    }
+
+    // Print all frames if no options supplied
+    if cli.get_frames.is_empty() && cli.set_frames.is_empty() {
+        for fpath in &cli.files {
+            if let Err(e) = print_all_file_frames_pretty(fpath) {
+                eprintln!("rsid3: {e}");
+                return ExitCode::FAILURE;
+            }
         }
     }
 
