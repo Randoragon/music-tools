@@ -202,7 +202,6 @@ impl Cli {
         let mut i = 1;
         while i < args.len() {
             let arg = args[i].as_str();
-            println!("arg#{i}: {arg}");
             match arg {
                 "-h" | "--help" => { help = true; },
                 "-L" | "--list-frames" => { list_frames = true; },
