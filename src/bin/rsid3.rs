@@ -326,7 +326,8 @@ impl Cli {
                         return Err(anyhow!("1 argument expected after {str}"));
                     }
                     let text = args[i + 1].clone();
-                    set_frames.push(Frame::text(&str[2..str.len()], text));
+                    set_frames.push(Frame::text(&str[2..(str.len() - 1)], text));
+                    i += 1;
                 },
 
                 str => {
