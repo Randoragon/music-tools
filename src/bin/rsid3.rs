@@ -342,21 +342,73 @@ impl Cli {
             _ => false,
         }
     }
+
+    /// Checks if a command-line argument is a delete argument.
+    fn is_delete_arg(arg: &str) -> bool {
+        arg.len() > 3 && arg.starts_with("--") && arg.ends_with("-")
+        && (&arg[2..(arg.len() - 1)]).chars() .all(|c| c.is_ascii_uppercase() || c.is_ascii_digit())
+    }
+}
+
+/// Convenience wrapper for getting any simple text content.
+fn get_content_text<'a>(frame: &'a Frame) -> Result<&'a str> {
+    match frame.content().text() {
+        Some(x) => Ok(x),
+        None => Err(anyhow!("Frame claims to be {} with T but has no text content: {frame:?}", frame.id())),
+    }
+}
+
+/// Convenience wrapper for getting any link content.
+fn get_content_link<'a>(frame: &'a Frame) -> Result<&'a str> {
+    match frame.content().link() {
+        Some(x) => Ok(x),
+        None => Err(anyhow!("Frame claims to be {} with T but has no link content: {frame:?}", frame.id())),
+    }
+}
+
+/// Convenience wrapper for getting TXXX content.
+fn get_content_txxx<'a>(frame: &'a Frame) -> Result<&'a ExtendedText> {
+    match frame.content().extended_text() {
+        Some(x) => Ok(x),
+        None => Err(anyhow!("Frame claims to be TXXX but has no extended text content: {frame:?}")),
+    }
+}
+
+/// Convenience wrapper for getting WXXX content.
+fn get_content_wxxx<'a>(frame: &'a Frame) -> Result<&'a ExtendedLink> {
+    match frame.content().extended_link() {
+        Some(x) => Ok(x),
+        None => Err(anyhow!("Frame claims to be WXXX but has no extended link content: {frame:?}")),
+    }
+}
+
+/// Convenience wrapper for getting COMM content.
+fn get_content_comm<'a>(frame: &'a Frame) -> Result<&'a Comment> {
+    match frame.content().comment() {
+        Some(x) => Ok(x),
+        None => Err(anyhow!("Frame claims to be COMM but has no comment content: {frame:?}")),
+    }
+}
+
+/// Convenience wrapper for getting USLT content.
+fn get_content_uslt<'a>(frame: &'a Frame) -> Result<&'a Lyrics> {
+    match frame.content().lyrics() {
+        Some(x) => Ok(x),
+        None => Err(anyhow!("Frame claims to be USLT but has no lyrics content: {frame:?}")),
+    }
 }
 
 /// Get text contents from a tag, based on a frame query.
 fn print_text_from_tag<'a>(tag: &'a Tag, frame: &Frame) -> Result<()> {
     match frame.id() {
         "TXXX" => {
-            let desc_query = match frame.content().extended_text() {
-                Some(extended_text) => &extended_text.description,
-                None => return Err(anyhow!("Frame claims to be TXXX but has no extended text content")),
-            };
+            let desc_query = &get_content_txxx(frame)?.description;
+
             for txxx in tag.frames().filter(|&f| f.id() == "TXXX") {
-                let extended_text = match txxx.content().extended_text() {
-                    Some(extended_text) => extended_text,
-                    None => {
-                        eprintln!("Invalid TXXX frame found: {txxx:#?}");
+                let extended_text = match get_content_txxx(txxx) {
+                    Ok(x) => x,
+                    Err(e) => {
+                        eprintln!("rsid3: {e}");
                         continue;
                     },
                 };
@@ -368,15 +420,12 @@ fn print_text_from_tag<'a>(tag: &'a Tag, frame: &Frame) -> Result<()> {
             return Err(anyhow!("TXXX frame with description '{desc_query}' not found"));
         },
         "WXXX" => {
-            let desc_query = match frame.content().extended_link() {
-                Some(extended_link) => &extended_link.description,
-                None => return Err(anyhow!("frame claims to be WXXX but has no extended link content")),
-            };
+            let desc_query = &get_content_wxxx(frame)?.description;
             for wxxx in tag.frames().filter(|&f| f.id() == "WXXX") {
-                let extended_link = match wxxx.content().extended_link() {
-                    Some(extended_link) => extended_link,
-                    None => {
-                        eprintln!("Invalid WXXX frame found: {wxxx:#?}");
+                let extended_link = match get_content_wxxx(wxxx) {
+                    Ok(x) => x,
+                    Err(e) => {
+                        eprintln!("rsid3: {e}");
                         continue;
                     },
                 };
@@ -388,15 +437,13 @@ fn print_text_from_tag<'a>(tag: &'a Tag, frame: &Frame) -> Result<()> {
             return Err(anyhow!("WXXX frame with description '{desc_query}' not found"));
         },
         "COMM" => {
-            let (desc_query, lang_query) = match frame.content().comment() {
-                Some(comment) => (&comment.description, &comment.lang),
-                None => return Err(anyhow!("frame claims to be COMM but has no comment content")),
-            };
+            let comment_query = get_content_comm(frame)?;
+            let (desc_query, lang_query) = (&comment_query.description, &comment_query.lang);
             for comm in tag.frames().filter(|&f| f.id() == "COMM") {
-                let comment = match comm.content().comment() {
-                    Some(comment) => comment,
-                    None => {
-                        eprintln!("Invalid COMM frame found: {comm:#?}");
+                let comment = match get_content_comm(comm) {
+                    Ok(x) => x,
+                    Err(e) => {
+                        eprintln!("rsid3: {e}");
                         continue;
                     },
                 };
@@ -408,15 +455,13 @@ fn print_text_from_tag<'a>(tag: &'a Tag, frame: &Frame) -> Result<()> {
             return Err(anyhow!("COMM frame with description '{desc_query}' and language '{lang_query}' not found"));
         },
         "USLT" => {
-            let (desc_query, lang_query) = match frame.content().lyrics() {
-                Some(lyrics) => (&lyrics.description, &lyrics.lang),
-                None => return Err(anyhow!("frame claims to be USLT but has no lyrics content")),
-            };
+            let lyrics_query = get_content_uslt(frame)?;
+            let (desc_query, lang_query) = (&lyrics_query.description, &lyrics_query.lang);
             for uslt in tag.frames().filter(|&f| f.id() == "USLT") {
-                let lyrics = match uslt.content().lyrics() {
-                    Some(lyrics) => lyrics,
-                    None => {
-                        eprintln!("Invalid USLT frame found: {uslt:#?}");
+                let lyrics = match get_content_uslt(uslt) {
+                    Ok(x) => x,
+                    Err(e) => {
+                        eprintln!("rsid3: {e}");
                         continue;
                     },
                 };
@@ -432,23 +477,15 @@ fn print_text_from_tag<'a>(tag: &'a Tag, frame: &Frame) -> Result<()> {
                 Some(frame) => frame,
                 None => return Err(anyhow!("Frame not found: {x}")),
             };
-            let text = match text_frame.content().text() {
-                Some(text) => text,
-                None => return Err(anyhow!("Frame claims to be {x} but has no text content")),
-            };
-            println!("{}", text);
+            println!("{}", get_content_text(text_frame)?);
             return Ok(());
         },
         x if x.starts_with("W") => {
-            let text_frame = match tag.get(x) {
+            let link_frame = match tag.get(x) {
                 Some(frame) => frame,
                 None => return Err(anyhow!("Frame not found: {x}")),
             };
-            let link = match text_frame.content().link() {
-                Some(link) => link,
-                None => return Err(anyhow!("Frame claims to be {x} but has no link content")),
-            };
-            println!("{}", link);
+            println!("{}", get_content_link(link_frame)?);
             return Ok(());
         },
         x => {
@@ -487,46 +524,26 @@ fn print_file_frames(fpath: &str, frames: &Vec<Frame>, delimiter: &str) -> Resul
 fn print_frame_pretty(frame: &Frame) -> Result<()> {
     match frame.id() {
         "TXXX" => {
-            let extended_text = match frame.content().extended_text() {
-                Some(x) => x,
-                None => return Err(anyhow!("frame claims to be TXXX but has no extended text content")),
-            };
+            let extended_text = get_content_txxx(frame)?;
             println!("{}[{}]: {}", frame.id(), extended_text.description, extended_text.value);
         },
         "WXXX" => {
-            let extended_link = match frame.content().extended_link() {
-                Some(x) => x,
-                None => return Err(anyhow!("frame claims to be WXXX but has no extended link content")),
-            };
+            let extended_link = get_content_wxxx(frame)?;
             println!("{}[{}]: {}", frame.id(), extended_link.description, extended_link.link);
         },
         "COMM" => {
-            let comment = match frame.content().comment() {
-                Some(x) => x,
-                None => return Err(anyhow!("frame claims to be COMM but has no comment content")),
-            };
+            let comment = get_content_comm(frame)?;
             println!("{}[{}]({}): {}", frame.id(), comment.description, comment.lang, comment.text);
         },
         "USLT" => {
-            let lyrics = match frame.content().lyrics() {
-                Some(x) => x,
-                None => return Err(anyhow!("frame claims to be USLT but has no lyrics content")),
-            };
+            let lyrics = get_content_uslt(frame)?;
             println!("{}[{}][{}]: {}", frame.id(), lyrics.description, lyrics.lang, lyrics.text);
         },
         str if str.starts_with("T") => {
-            let text = match frame.content().text() {
-                Some(x) => x,
-                None => return Err(anyhow!("frame starts with T but has no text content")),
-            };
-            println!("{}: {}", frame.id(), text);
+            println!("{}: {}", frame.id(), get_content_text(frame)?);
         },
         str if str.starts_with("W") => {
-            let link = match frame.content().link() {
-                Some(x) => x,
-                None => return Err(anyhow!("frame starts with W but has no link content")),
-            };
-            println!("{}: {}", frame.id(), link);
+            println!("{}: {}", frame.id(), get_content_link(frame)?);
         },
         _ => {
             println!("{}: {}", frame.id(), frame.content());
