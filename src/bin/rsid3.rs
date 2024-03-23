@@ -13,6 +13,7 @@ struct Cli {
     null_delimited: bool,
     get_frames: Vec<Frame>,
     set_frames: Vec<Frame>,
+    del_frames: Vec<Frame>,
     files: Vec<String>,
 }
 
@@ -35,14 +36,16 @@ impl Cli {
         eprintln!("  --FRAME= TEXT            Set the value of FRAME.");
         eprintln!("  --FRAME= DESC TEXT       Set the value of FRAME (TXXX, WXXX).");
         eprintln!("  --FRAME= DESC LANG TEXT  Set the value of FRAME (COMM, USLT).");
+        eprintln!("  --FRAME-                 Delete FRAME.");
+        eprintln!("  --FRAME- DESC            Delete FRAME (TXXX, WXXX).");
+        eprintln!("  --FRAME- DESC LANG       Delete FRAME (COMM, USLT).");
         eprintln!("");
         eprintln!("If the value of LANG is irrelevant when printing a frame, 'first'");
         eprintln!("can be passed instead, in which case the first frame with a matching");
         eprintln!("DESC is printed.");
-        eprintln!("If no print or set options are supplied, all frames are printed.");
-        eprintln!("Any number of print and set options can be passed in any order.");
-        eprintln!("Print options are always evaluated before set options. Both print");
-        eprintln!("and set options are evaluated in the order in which they were passed.");
+        eprintln!("If no print/set/delete options are supplied, all frames are printed.");
+        eprintln!("Any number of print/set/delete options can be passed in any order.");
+        eprintln!("Print options are evaluated first, then set, then delete.");
     }
 
     /// Prints the available frames.
@@ -166,6 +169,7 @@ impl Cli {
         let mut null_delimited = false;
         let mut get_frames = vec![];
         let mut set_frames = vec![];
+        let mut del_frames = vec![];
         let mut i = 1;
         while i < args.len() {
             let arg = args[i].as_str();
@@ -296,6 +300,59 @@ impl Cli {
                     i += 1;
                 },
 
+                "--COMM-" => {
+                    if i + 2 >= args.len() {
+                        return Err(anyhow!("2 arguments expected after --COMM"));
+                    }
+                    let comment = Comment {
+                        description: args[i + 1].clone(),
+                        lang: args[i + 2].clone(),
+                        text: "".to_string(),
+                    };
+                    del_frames.push(Frame::with_content("COMM", Content::Comment(comment)));
+                    i += 2;
+                }
+                "--USLT-" => {
+                    if i + 2 >= args.len() {
+                        return Err(anyhow!("2 arguments expected after --USLT"));
+                    }
+                    let lyrics = Lyrics {
+                        description: args[i + 1].clone(),
+                        lang: args[i + 2].clone(),
+                        text: "".to_string(),
+                    };
+                    del_frames.push(Frame::with_content("USLT", Content::Lyrics(lyrics)));
+                    i += 2;
+                },
+
+                "--TXXX-" => {
+                    if i + 1 >= args.len() {
+                        return Err(anyhow!("1 argument expected after --TXXX"));
+                    }
+                    let extended_text = ExtendedText {
+                        value: "".to_string(),
+                        description: args[i + 1].clone(),
+                    };
+                    del_frames.push(Frame::with_content("TXXX", Content::ExtendedText(extended_text)));
+                    i += 1;
+                },
+                "--WXXX-" => {
+                    if i + 1 >= args.len() {
+                        return Err(anyhow!("1 argument expected after --WXXX"));
+                    }
+                    let extended_link = ExtendedLink {
+                        link: "".to_string(),
+                        description: args[i + 1].clone(),
+                    };
+                    del_frames.push(Frame::with_content("WXXX", Content::ExtendedLink(extended_link)));
+                    i += 1;
+                },
+
+                // All parameterless delete args
+                str if Cli::is_delete_arg(str) => {
+                    del_frames.push(Frame::text(&str[2..(str.len() - 1)], ""));
+                },
+
                 str => {
                     if str.starts_with("-") {
                         return Err(anyhow!("Unknown option: '{arg}'"));
@@ -313,10 +370,11 @@ impl Cli {
         Ok(Cli {
             help,
             list_frames,
-            get_frames,
             delimiter,
             null_delimited,
+            get_frames,
             set_frames,
+            del_frames,
             files,
         })
     }
@@ -520,6 +578,93 @@ fn print_file_frames(fpath: &str, frames: &Vec<Frame>, delimiter: &str) -> Resul
     Ok(())
 }
 
+/// Returns whether two frames are identical except for the relevant content component.
+/// E.g. two text types are equal iff their IDs match, but two COMMs are equal iff
+/// their IDs, descriptions and languages match.
+fn frames_query_equal(frame1: &Frame, frame2: &Frame) -> Result<bool, anyhow::Error> {
+    if frame1.id() != frame2.id() {
+        return Ok(false);
+    }
+    match frame1.id() {
+        "TXXX" => {
+            let extended_text1 = get_content_txxx(frame1)?;
+            let extended_text2 = get_content_txxx(frame2)?;
+            if extended_text1.description != extended_text2.description {
+                return Ok(false);
+            }
+        },
+        "WXXX" => {
+            let extended_link1 = get_content_wxxx(frame1)?;
+            let extended_link2 = get_content_wxxx(frame2)?;
+            if extended_link1.description != extended_link2.description {
+                return Ok(false);
+            }
+        },
+
+        "COMM" => {
+            let comment1 = get_content_comm(frame1)?;
+            let comment2 = get_content_comm(frame2)?;
+            if comment1.description != comment2.description || comment1.lang != comment2.lang {
+                return Ok(false);
+            }
+        },
+        "USLT" => {
+            let lyrics1 = get_content_uslt(frame1)?;
+            let lyrics2 = get_content_uslt(frame2)?;
+            if lyrics1.description != lyrics2.description || lyrics1.lang != lyrics2.lang {
+                return Ok(false);
+            }
+        },
+        _ => (),
+    }
+    Ok(true)
+}
+
+/// Deletes frames from a file.
+fn delete_file_frames(fpath: &str, frames: &Vec<Frame>) -> Result<()> {
+    let mut tag = match Tag::read_from_path(fpath) {
+        Ok(tag) => tag,
+        Err(e) => return Err(anyhow!("Failed to read tags from file '{fpath}': {e}")),
+    };
+
+    // Not the most efficient approach, but the id3 crate API is not the best either
+    let mut was_modified = false;
+    for frame in frames {
+        let mut found = false;
+        for removed_frame in tag.remove(frame.id()) {
+            if frames_query_equal(frame, &removed_frame)? {
+                // Remove this frame (i.e. don't add it back)
+                found = true
+            } else {
+                tag.add_frame(removed_frame);
+            }
+        }
+        let frame_str = match frame.id() {
+            "WXXX" => format!("{}[{}]", frame.id(), get_content_wxxx(frame)?.description),
+            "TXXX" => format!("{}[{}]", frame.id(), get_content_txxx(frame)?.description),
+            "COMM" => {
+                let comment = get_content_comm(frame)?;
+                format!("{}[{}]({})", frame.id(), comment.description, comment.lang)
+            },
+            "USLT" => {
+                let lyrics = get_content_uslt(frame)?;
+                format!("{}[{}]({})", frame.id(), lyrics.description, lyrics.lang)
+            },
+            x => x.to_string(),
+        };
+        eprintln!("{fpath}: Could not delete {frame_str}: frame not found");
+        was_modified |= found;
+    }
+
+    if was_modified {
+        if let Err(e) = tag.write_to_path(fpath, tag.version()) {
+            return Err(anyhow!("Failed to write tags to '{fpath}': {e}"));
+        }
+    }
+
+    Ok(())
+}
+
 /// Pretty-prints a single frame.
 fn print_frame_pretty(frame: &Frame) -> Result<()> {
     match frame.id() {
@@ -642,8 +787,16 @@ fn main() -> ExitCode {
         }
     }
 
+    // Handle all delete options
+    for fpath in &cli.files {
+        if let Err(e) = delete_file_frames(fpath, &cli.del_frames) {
+            eprintln!("rsid3: {e}");
+            return ExitCode::FAILURE;
+        }
+    }
+
     // Print all frames if no options supplied
-    if cli.get_frames.is_empty() && cli.set_frames.is_empty() {
+    if cli.get_frames.is_empty() && cli.set_frames.is_empty() && cli.del_frames.is_empty() {
         for fpath in &cli.files {
             if let Err(e) = print_all_file_frames_pretty(fpath) {
                 eprintln!("rsid3: {e}");
