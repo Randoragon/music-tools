@@ -795,8 +795,13 @@ fn main() -> ExitCode {
         }
     }
 
-    // Print all frames if no options supplied
     if cli.get_frames.is_empty() && cli.set_frames.is_empty() && cli.del_frames.is_empty() {
+        if cli.files.is_empty() {
+            Cli::print_usage();
+            return ExitCode::FAILURE;
+        }
+
+        // Print all frames if no options supplied
         for fpath in &cli.files {
             if let Err(e) = print_all_file_frames_pretty(fpath) {
                 eprintln!("rsid3: {e}");
